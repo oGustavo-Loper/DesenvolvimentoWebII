@@ -1,78 +1,135 @@
-const User = require('../models/User')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+import user from '../models/User.js'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 
-module.exports = {
-    async index(request, response){
-        try{
-            const users = await User.find({})
-            return response.status(200).json(users)
-        }catch(error){
-            return response.status(400).json({ msg: error.message})
-        }
-    },
-    delete(request, response){
-        const id = request.paraments.id;
-        User.findByIdAndDelete(id, (err, ProductDeleted) => {
-            if(err){
-                response.status(500).send(err)
-            }else if(ProductDeleted){
-                return response.json(ProductDeleted)
-            }else{
-                return response.status(404).json({ Erro: `Product not found` })
+class UserController {
+    static listUser = (request, response) => {
+        user.find({}, (err, user) => {
+            if(err) {
+                response.status(500).json({ Erro: err })
+            }
+            else {
+                response.status(200).json(user)
             }
         })
-    },
-    Update(request, response){
-        const id = request.paraments.id
-        const _name = request.body
-        User.findByIdAndUpdate(id, _name, (err, UpdateProduct) =>{
-            if(err){
-                response.status(500).send(err);
-            }else if(UpdateProduct){
-                return response.json(UpdateProduct)
-            }else{
-                return response.status(404).json({ Erro: `Product not found` })
+    }
+    static listUserId = (request, response) => {
+        const id = request.params.id
+
+        user.findById(id, (err, userFound) => {
+            if(err) {
+                response.status(500).json({ Erro: err })
+            }
+            else if(userFound) {
+                return response.json(userFound)
+            }
+            else {
+                return response.status(404).json({ Erro: 'User not found'})
             }
         })
-    },
-    async Create(request, response){
-        const { name, password } = request.body
-        try{
-            const hash = bcrypt.hashSync(password, 10);
-            const newProduct = User.Create({ name, password: hash })
-            return response.status(200).json(newProduct);
-        }catch(error){
-            return response.status(400).json({ msg: error.message })
+    }
+    static registerUser = (request, response) => {
+        const UserReq = request.body
+        if(UserReq && UserReq.name && UserReq.email && UserReq.password) {
+            const NewUser = new user(UserReq)
+            console.log('Password 1', NewUser.password)
+            NewUser.password = bcrypt.hashSync(UserReq.password, 10)
+            console.log('Password 2', NewUser.password)
+            NewUser.save((err, saveUser) => {
+                if(err) {
+                    response.status(500).json({ Erro: err })
+                }
+                else {
+                    return response.status(201).json(saveUser)
+                }
+            })
         }
-    },
-    async Login(request, response){
-        const { name, password } = request.body
-        if( !name || !password ){
-            response.status(400).json({ erro: `Incorrect login or password`})
-            return
+        else {
+            return response.status(400).json({
+                Erro: 'Name, email and/or password invalid'
+            })
         }
-        try{
-            const dados = await User.findOne({ name });
-            if(!dados){
-                response.status(400).json({ erro: `Incorrect login or password`});
-                return;
+    }
+    static updateUser = (request, response) => {
+        const id = request.params.id
+        const userReq = request.body
+        if(!userReq || !userReq.name || !userReq.email) {
+            return response.status(400).json({
+                Erro: 'Name and/or email are mandatory'
+            });
+        }
+        if(userReq.password){
+            userReq.password = bcrypt.hashSync(userReq.password, 10)
+        }
+        user.findByIdAndUpdate(id, userReq, { new: true },
+            (err, updateUser) => {
+                if(err) {
+                    response.status(500).json({ Erro: err })
+                }
+                else if(updateUser) {
+                    return response.json(updateUser)
+                }
+                else{
+                    return response.status(404).json({ Erro: 'User not found' })
+                }
+            })
+    }
+    static deleteUser = (request, response) => {
+        const id = request.params.id
+        user.findByIdAndDelete(id, (err, userDeleted) => {
+            if(err) {
+                return response.status(500).json({ Erro: err })
             }
-            if(bcrypt.compareSync(password, dados.password)){
-                const token = jwt.sign({
-                    user_id: dados.id,
-                    user_name: dados.name
-                }, process.env.JWT_KEY,
-                    {
-                        expiresIn: "1h"
-                    }
-                )
-                response.status(200).json({ name: dados.name, token });
-            }else{
-                response.status(400).json({ erro: `Incorrect login or password` })
+            else if(userDeleted) {
+                return response.json(userDeleted)
             }
-        }catch(error){
-            response.status(400).json({ erro: error.message })
+            else {
+                return response.status(400).json({ Erro: 'User not found' })
+            }
+        })
+    }
+    static searchUser = (request,respose) => {
+        if(request.query && request.query.email) {
+            const paramsEmail = request.query.email
+            user.findOne({ email: paramsEmail }, (err, userSearch) => {
+                if(err){
+                    return response.status(500).json({ Erro: err })
+                }
+                else if(userSearch) {
+                    return response.json(userSearch);
+                }
+                else {
+                    return response.status(404).json({ Erro: 'User Not Found'})
+                }
+            })
+        }
+        else {
+            response.status(400).json({ Erro: 'Email not insert' })
+        }
+    }
+    static validateUser = (request, response) => {
+        if(request.body && request.body.email && request.body.password) {
+            const emailUser = request.body.email
+            const passwordUser = request.body.password
+            user.findOne({ email: emailUser}, (err, userSearch) => {
+                if(err) {
+                    return response.status(500).json({ Erro: err })
+                }
+                else if(userSearch && bcrypt.compareSync(passwordUser, userSearch.password)) {
+                    const token = jwt.sign({
+                        id: userSearch.id
+                    }, 'P455W0RD', { expiresIn: '1h'})
+                    response.status(201).json({ token: token })
+                }
+                else {
+                    response.status(401).json({ Erro: 'User or password invalid' })
+                }
+            })
+        }
+        else {
+            response.status(400).json({ Erro: 'Params invalid' })
         }
     }
 }
+
+export default UserController

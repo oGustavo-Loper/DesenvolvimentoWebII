@@ -1,13 +1,23 @@
-const jwt = require('jsonwebtoken')
+import jwt from 'jsonwebtoken'
 
-module.exports = (request, response, next) =>{
-    try{
-        const token = request.headers.authorization.split(" ")[1]
-        const decode = jwt.verify(token, process.env.JWT_KEY)
-        console.log(decode)
-        request.user_id = decode.user_id
-        next()
-    }catch(error){
-        return response.status(401).send({ erro: `Authentication failure` })
+class validateToken {
+    static valid = (request, response, next) => {
+        const token = request.get('Token')
+        if(!token) {
+            response.status(401).json({ Erro: 'Token Invalid' })
+        }
+        else {
+            jwt.verify(token, 'P455W0RD', (err, payload) => {
+                if(err) {
+                    response.status(401).json({ Erro: 'Token Invalid' })
+                }
+                else {
+                    console.log(JSON.stringify(payload))
+                    next()
+                }
+            })
+        }
     }
 }
+
+export default validateToken

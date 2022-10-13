@@ -1,16 +1,15 @@
-const{ model, Schema } = require('mongoose')
-const newProductSchema = new Schema({
-    id:{
-        type: Number,
-        AutoIncrement: true,
+import mongoose from "mongoose";
+
+const UserSchema = new mongoose.Schema({
+    id: { type: String },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true}
     },
-    name: {
-        type: String,
-        required: true,
-    },
-    password: {
-        type: String,
-        required: true,
+    {
+        versionKey: false
     }
-})
-module.exports = model('user', newProductSchema)
+)
+const user = mongoose.model('user', UserSchema)
+
+export default user

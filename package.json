@@ -2,9 +2,10 @@
   "name": "senac",
   "version": "1.0.0",
   "description": "Repository Repository to store chair codes Desenvolvimento Web II",
-  "main": "index.js",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "nodemon src/index.js"
+    "start": "nodemon --trace-warnings server.js"
   },
   "repository": {
     "type": "git",
