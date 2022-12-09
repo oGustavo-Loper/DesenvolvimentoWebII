@@ -19,15 +19,26 @@ class CompanyController {
         })
     }
     static registerCompany = (request, response) => {
-        let companys = new company(req.body)
-        companys.save((err) => {
-            if(err) {
-                response.status(500).send({ Erro: err})
-            }
-            else {
-                response.status(201).send(companys.toJSON())
-            }
-        }) 
+        const CompanyReq = request.body
+        if(CompanyReq && CompanyReq.name && CompanyReq.email && CompanyReq.cnpj) {
+            const NewCompany = new company(CompanyReq)
+            // console.log('Password 1', NewCompany.password)
+            // NewCompany.password = bcrypt.hashSync(CompanyReq.password, 10)
+            // console.log('Password 2', NewCompany.password)
+            NewCompany.save((err, saveUser) => {
+                if(err) {
+                    response.status(500).json({ Erro: err })
+                }
+                else {
+                    return response.status(201).json(saveUser)
+                }
+            })
+        }
+        else {
+            return response.status(400).json({
+                Erro: 'Name, email and/or password invalid'
+            })
+        }
     }
     static updateCompany = (request, response) => {
         const id = request.params.id

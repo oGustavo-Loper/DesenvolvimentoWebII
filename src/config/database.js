@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 
-mongoose.connect('mongodb+srv://trab_frame:030189@cluster0.nrhkjhn.mongodb.net/test')
+mongoose.connect('mongodb://localhost/trabalhoweb2')
 
 let db = mongoose.connection
 

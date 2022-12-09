@@ -4,7 +4,7 @@ const CompanySchema = new mongoose.Schema({
     id: { type: String },
     name: { type: String },
     cnpj: { type: String },
-    email: { type: String }
+    email: { type: String },
     },
     {
         versionKey: false

@@ -30,7 +30,7 @@ class UserController {
     }
     static registerUser = (request, response) => {
         const UserReq = request.body
-        if(UserReq && UserReq.name && UserReq.email && UserReq.password) {
+        if(UserReq && UserReq.name && UserReq.email && UserReq.password && UserReq.SectorId) {
             const NewUser = new user(UserReq)
             console.log('Password 1', NewUser.password)
             NewUser.password = bcrypt.hashSync(UserReq.password, 10)
